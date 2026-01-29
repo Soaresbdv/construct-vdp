@@ -6,7 +6,6 @@ import api from '@/lib/axios';
 const router = useRouter();
 const isLoading = ref(false);
 
-// O formulário que será enviado
 const form = ref({
   name: '',
   email: '',
@@ -14,33 +13,21 @@ const form = ref({
   password_confirmation: ''
 });
 
-// Onde guardaremos os erros de validação do Laravel
 const errors = ref<any>({});
 
 async function handleRegister() {
   isLoading.value = true;
-  errors.value = {}; // Limpa erros antigos
+  errors.value = {};
 
   try {
-    // 1. Segurança: Pede o cookie CSRF para o Laravel Sanctum
     await api.get('/sanctum/csrf-cookie');
-
-    // 2. Envia os dados para a rota de registro do Breeze
     await api.post('/register', form.value);
-
-    // 3. Se passou daqui, deu sucesso!
-    alert('Cadastro realizado com sucesso! Bem-vindo.');
-    
-    // Redireciona para a Home
     router.push('/');
-
   } catch (error: any) {
     if (error.response?.status === 422) {
-      // Erro 422 = Validação do Laravel (ex: email já existe)
       errors.value = error.response.data.errors;
     } else {
-      console.error(error);
-      alert('Ocorreu um erro inesperado. Verifique o console.');
+      alert('Erro inesperado.');
     }
   } finally {
     isLoading.value = false;
@@ -49,76 +36,99 @@ async function handleRegister() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-    <div class="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+  <div class="min-h-screen flex bg-white font-sans text-stone-800">
+    
+    <div class="hidden lg:block lg:w-1/2 relative overflow-hidden bg-stone-900">
+      <img 
+        src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1931&auto=format&fit=crop" 
+        class="absolute inset-0 w-full h-full object-cover opacity-50 grayscale"
+        alt="Construction Site Artistic"
+      />
+      <div class="absolute inset-0 bg-gradient-to-b from-transparent to-stone-900/90"></div>
       
-      <div class="bg-orange-600 p-6 text-center">
-        <h1 class="text-2xl font-bold text-white">👷 Cadastro de Engenharia</h1>
-        <p class="text-orange-100 text-sm mt-1">Sistema de Gestão de Obras</p>
+      <div class="absolute bottom-12 left-12 max-w-lg text-white p-6">
+        <h2 class="text-3xl font-serif font-bold mb-4">Junte-se à excelência.</h2>
+        <p class="text-stone-300 font-light">
+          Faça parte da equipe que está redefinindo o skyline da cidade com tecnologia e design sustentável.
+        </p>
       </div>
-      
-      <form @submit.prevent="handleRegister" class="p-8 space-y-4">
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-          <input 
-            v-model="form.name" 
-            type="text" 
-            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
-            :class="{'border-red-500': errors.name, 'border-gray-300': !errors.name}"
-            placeholder="Ex: Ana Arquiteta"
-          >
-          <p v-if="errors.name" class="text-red-500 text-xs mt-1">{{ errors.name[0] }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-          <input 
-            v-model="form.email" 
-            type="email" 
-            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
-            :class="{'border-red-500': errors.email, 'border-gray-300': !errors.email}"
-            placeholder="email@obra.com"
-          >
-          <p v-if="errors.email" class="text-red-500 text-xs mt-1">{{ errors.email[0] }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-          <input 
-            v-model="form.password" 
-            type="password" 
-            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
-            :class="{'border-red-500': errors.password, 'border-gray-300': !errors.password}"
-          >
-          <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password[0] }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar Senha</label>
-          <input 
-            v-model="form.password_confirmation" 
-            type="password" 
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
-          >
-        </div>
-        
-        <button 
-          type="submit" 
-          :disabled="isLoading"
-          class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition duration-200 cursor-pointer disabled:opacity-70 flex justify-center"
-        >
-          <span v-if="isLoading">Registrando...</span>
-          <span v-else>Criar Conta</span>
-        </button>
-      </form>
-
-      <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
-        <RouterLink to="/" class="text-sm text-orange-600 hover:underline">
-          Voltar para Home
-        </RouterLink>
-      </div>
-
     </div>
+
+    <div class="w-full lg:w-1/2 flex flex-col justify-center px-12 sm:px-24 bg-white relative">
+      
+      <RouterLink to="/login" class="absolute top-8 right-12 text-sm font-medium text-stone-500 hover:text-amber-700 transition flex items-center gap-2">
+        &larr; Voltar ao Login
+      </RouterLink>
+
+      <div class="max-w-md w-full mx-auto">
+        <div class="mb-10">
+          <span class="text-2xl font-serif font-bold text-stone-900 tracking-tighter">
+            VDP<span class="text-amber-700">.</span>Construct
+          </span>
+        </div>
+
+        <h1 class="text-3xl font-serif text-stone-900 mb-2">Criar nova conta</h1>
+        <p class="text-stone-500 mb-8">Preencha os dados abaixo para iniciar seu cadastro.</p>
+
+        <form @submit.prevent="handleRegister" class="space-y-5">
+          
+          <div class="group">
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Nome Completo</label>
+            <input 
+              v-model="form.name" 
+              type="text" 
+              class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition duration-300"
+              :class="{'border-red-300': errors.name}"
+              placeholder="Ex: Arq. João Silva"
+            >
+            <p v-if="errors.name" class="text-red-500 text-xs mt-1">{{ errors.name[0] }}</p>
+          </div>
+
+          <div class="group">
+            <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">E-mail</label>
+            <input 
+              v-model="form.email" 
+              type="email" 
+              class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition duration-300"
+              :class="{'border-red-300': errors.email}"
+              placeholder="seu@email.com"
+            >
+            <p v-if="errors.email" class="text-red-500 text-xs mt-1">{{ errors.email[0] }}</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Senha</label>
+              <input 
+                v-model="form.password" 
+                type="password" 
+                class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition duration-300"
+                :class="{'border-red-300': errors.password}"
+              >
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Confirmar</label>
+              <input 
+                v-model="form.password_confirmation" 
+                type="password" 
+                class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition duration-300"
+              >
+            </div>
+          </div>
+          <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password[0] }}</p>
+
+          <button 
+            type="submit" 
+            :disabled="isLoading"
+            class="w-full mt-4 bg-amber-700 text-white font-medium py-4 rounded-lg hover:bg-amber-800 transition duration-300 shadow-lg shadow-amber-900/20 cursor-pointer disabled:opacity-70 flex justify-center"
+          >
+             <span v-if="isLoading">Criando conta...</span>
+             <span v-else>Finalizar Cadastro</span>
+          </button>
+
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
