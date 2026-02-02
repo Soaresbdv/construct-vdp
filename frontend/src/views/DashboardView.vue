@@ -36,12 +36,15 @@ async function handleLogout() {
           <a href="#" class="hover:text-amber-700 transition">Projetos</a>
           <a href="#" class="hover:text-amber-700 transition">Financeiro</a>
           <a href="#" class="hover:text-amber-700 transition">Equipe</a>
-          <button 
-            @click="handleLogout" 
-            class="px-5 py-2 bg-stone-900 text-white rounded-full hover:bg-stone-800 transition cursor-pointer"
+          
+          <RouterLink 
+            to="/login" 
+            class="px-5 py-2 bg-stone-900 text-white rounded-full hover:bg-amber-700 transition cursor-pointer flex items-center gap-2"
           >
-            Sair
-          </button>
+            <span>Área do Cliente</span>
+            <span class="text-amber-500">&rarr;</span>
+          </RouterLink>
+
         </div>
       </div>
     </nav>
