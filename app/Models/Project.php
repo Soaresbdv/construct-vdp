@@ -26,4 +26,13 @@ class Project extends Model
             'end_date' => 'date',
         ];
     }
+    public function views()
+    {
+        return $this->hasMany(ProjectView::class);
+    }
+
+    public function leads()
+    {
+        return $this->hasMany(Lead::class);
+    }
 }

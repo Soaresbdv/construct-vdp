@@ -12,10 +12,6 @@ class ProjectController extends Controller
         return Project::latest()->get();
     }
     
-    public function show($id)
-    {
-        return \App\Models\Project::findOrFail($id);
-    }
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -79,5 +75,19 @@ class ProjectController extends Controller
         $project->delete();
 
         return response()->json(null, 204);
+    }
+    public function show(Request $request, $id)
+    {
+        $project = Project::findOrFail($id);
+        
+        \App\Models\ProjectView::create([
+            'project_id' => $project->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->header('User-Agent'),
+            'user_id' => $request->user('sanctum') ? $request->user('sanctum')->id : null,
+        ]);
+        // ----------------------------------------
+
+        return response()->json($project);
     }
 }
