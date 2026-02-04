@@ -66,26 +66,18 @@ class ProjectController extends Controller
     }
     public function destroy($id)
     {
-        // 1. Encontra a obra ou falha (404) se não existir
         $project = Project::findOrFail($id);
 
-        // 2. Tenta apagar a imagem física do servidor para economizar espaço
-        // A url é algo como "http://localhost:8000/storage/projects/foto.jpg"
-        // Precisamos transformar em "projects/foto.jpg" para o Storage apagar
         try {
             if ($project->image_url) {
-                // Pega apenas o caminho relativo depois de 'storage/'
                 $path = str_replace(asset('storage/'), '', $project->image_url);
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
             }
         } catch (\Exception $e) {
-            // Se der erro ao apagar arquivo, segue o baile e apaga do banco assim mesmo
         }
 
-        // 3. Apaga o registro do Banco de Dados
         $project->delete();
 
-        // 4. Retorna 204 (No Content) - Sucesso sem corpo
         return response()->json(null, 204);
     }
 }

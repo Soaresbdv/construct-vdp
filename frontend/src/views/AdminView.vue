@@ -138,8 +138,8 @@ const handleSave = async () => {
 const handleDelete = async (id: number) => {
   if(!confirm("⚠️ Tem certeza? Essa ação não pode ser desfeita.")) return;
   try {
-    await api.delete(`/api/projects/${id}`); // Chama a rota que acabamos de consertar
-    projects.value = projects.value.filter(p => p.id !== id); // Remove da tela visualmente
+    await api.delete(`/api/projects/${id}`);
+    projects.value = projects.value.filter(p => p.id !== id); 
     alert("Obra apagada com sucesso!");
   } catch (error) {
     alert("Erro ao excluir.");
