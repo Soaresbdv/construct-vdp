@@ -5,6 +5,7 @@ import api from '@/lib/axios';
 
 const router = useRouter();
 
+// Definição dos Tipos
 interface Project {
   id: number;
   title: string;
@@ -13,26 +14,52 @@ interface Project {
   status: 'planning' | 'in_progress' | 'finished';
 }
 
+// Estado Reativo
 const projects = ref<Project[]>([]);
 const isLoading = ref(true);
+const currentUser = ref<any>(null); 
 
+// Configuração Visual dos Status
 const statusConfig: Record<string, { label: string, class: string }> = {
   planning: { label: 'Planejamento', class: 'bg-blue-100 text-blue-800 border-blue-200' },
   in_progress: { label: 'Em Andamento', class: 'bg-amber-100 text-amber-800 border-amber-200' },
   finished: { label: 'Entregue', class: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
 };
 
+// Navegação para Detalhes
 const goToProject = (id: number) => {
   router.push(`/projects/${id}`);
 };
 
+// Função de Logout
+const handleLogout = async () => {
+  try {
+    await api.post('/logout'); 
+    currentUser.value = null;  
+    alert("Você saiu do sistema.");
+    window.location.reload();  
+  } catch (error) {
+    console.error("Erro ao sair", error);
+    alert("Erro ao tentar sair.");
+  }
+};
+
+// Carregamento Inicial (Busca Obras e Usuário)
 onMounted(async () => {
   try {
-    const response = await api.get('/api/projects'); 
-    
-    projects.value = response.data;
+    const responseProjects = await api.get('/api/projects');
+    projects.value = responseProjects.data;
+
+    try {
+      const responseUser = await api.get('/api/user');
+      currentUser.value = responseUser.data;
+      console.log("Usuário logado:", currentUser.value.name);
+    } catch (e) {
+      currentUser.value = null;
+    }
+
   } catch (error) {
-    console.error('Erro ao buscar obras:', error);
+    console.error('Erro geral ao carregar dashboard:', error);
   } finally {
     isLoading.value = false;
   }
@@ -44,21 +71,56 @@ onMounted(async () => {
     
     <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-stone-200">
       <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <div class="text-2xl font-serif font-bold text-stone-900 tracking-tighter">
+        <div class="text-2xl font-serif font-bold text-stone-900 tracking-tighter cursor-pointer" @click="router.push('/')">
           VDP<span class="text-amber-700">.</span>Construct
         </div>
         
-        <div class="hidden md:flex gap-8 items-center text-sm font-medium text-stone-600">
+        <div class="hidden md:flex gap-6 items-center text-sm font-medium text-stone-600">
           <a href="#" class="hover:text-amber-700 transition">Projetos</a>
           <a href="#" class="hover:text-amber-700 transition">Sustentabilidade</a>
           
-          <RouterLink 
-            to="/login" 
-            class="px-5 py-2 bg-stone-900 text-white rounded-full hover:bg-amber-700 transition cursor-pointer flex items-center gap-2"
-          >
-            <span>Área do Cliente</span>
-            <span class="text-amber-500">&rarr;</span>
-          </RouterLink>
+          <div v-if="!currentUser">
+            <RouterLink 
+              to="/login" 
+              class="px-5 py-2 bg-stone-900 text-white rounded-full hover:bg-amber-700 transition cursor-pointer flex items-center gap-2"
+            >
+              <span>Área do Cliente</span>
+              <span class="text-amber-500">&rarr;</span>
+            </RouterLink>
+          </div>
+
+          <div v-else class="flex items-center gap-6">
+            
+            <RouterLink 
+              v-if="currentUser.is_admin"
+              to="/admin"
+              class="flex items-center gap-2 text-stone-500 hover:text-stone-900 transition group"
+              title="Painel Administrativo"
+            >
+              <span class="p-1.5 bg-stone-100 rounded group-hover:bg-amber-100 group-hover:text-amber-700 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              </span>
+              <span class="text-xs font-bold uppercase tracking-wide">Admin</span>
+            </RouterLink>
+
+            <div class="h-6 w-px bg-stone-200"></div>
+
+            <div class="flex items-center gap-3">
+              <div class="text-right leading-tight hidden lg:block">
+                <p class="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Olá,</p>
+                <p class="font-serif text-stone-800">{{ currentUser.name.split(' ')[0] }}</p> </div>
+
+              <button 
+                @click="handleLogout" 
+                class="text-stone-400 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-full group"
+                title="Sair do sistema"
+              >
+                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+              </button>
+            </div>
+
+          </div>
+
         </div>
       </div>
     </nav>
@@ -112,7 +174,6 @@ onMounted(async () => {
         <div v-for="i in 4" :key="i" class="animate-pulse">
            <div class="bg-gray-200 h-[400px] rounded-xl mb-4"></div>
            <div class="h-6 bg-gray-200 w-2/3 rounded mb-2"></div>
-           <div class="h-4 bg-gray-200 w-1/3 rounded"></div>
         </div>
       </div>
 
@@ -121,7 +182,7 @@ onMounted(async () => {
           v-for="project in projects" 
           :key="project.id" 
           class="group cursor-pointer"
-          @click="goToProject(project.id)" 
+          @click="goToProject(project.id)"
         >
           <div class="relative overflow-hidden rounded-xl h-[400px] mb-6 shadow-md">
             <img 

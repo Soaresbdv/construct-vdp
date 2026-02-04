@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'admin' => EnsureUserIsAdmin::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
