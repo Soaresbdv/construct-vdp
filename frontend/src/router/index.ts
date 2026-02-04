@@ -56,7 +56,12 @@ const router = createRouter({
           next('/login');
         }
       }
-    }
+    },
+    {
+      path: '/portfolio',
+      name: 'portfolio',
+      component: () => import('../views/PortfolioView.vue') // Vamos criar este arquivo já já
+    },
   ]
 })
 
