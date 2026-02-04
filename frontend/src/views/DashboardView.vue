@@ -22,6 +22,10 @@ const statusConfig: Record<string, { label: string, class: string }> = {
   finished: { label: 'Entregue', class: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
 };
 
+const goToProject = (id: number) => {
+  router.push(`/projects/${id}`);
+};
+
 onMounted(async () => {
   try {
     const response = await api.get('/api/projects'); 
@@ -117,6 +121,7 @@ onMounted(async () => {
           v-for="project in projects" 
           :key="project.id" 
           class="group cursor-pointer"
+          @click="goToProject(project.id)" 
         >
           <div class="relative overflow-hidden rounded-xl h-[400px] mb-6 shadow-md">
             <img 

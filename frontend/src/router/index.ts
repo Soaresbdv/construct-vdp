@@ -5,7 +5,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home', // A Dashboard agora é a Home
+      name: 'home', 
       component: () => import('../views/DashboardView.vue')
     },
     {
@@ -18,11 +18,15 @@ const router = createRouter({
       name: 'register',
       component: () => import('../views/RegisterView.vue')
     },
-    // (Opcional) Mantemos o alias caso alguém tente acessar /dashboard direto
     {
       path: '/dashboard',
       redirect: '/' 
-    }
+    },
+    {
+      path: '/projects/:id',
+      name: 'project-details',
+      component: () => import('../views/ProjectDetailsView.vue')
+    },
   ]
 })
 
