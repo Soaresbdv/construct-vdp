@@ -16,9 +16,9 @@ class Project extends Model
         'image_url',
         'start_date',
         'end_date',
+        'image_url',
     ];
     
-    // Opcional: Casts para garantir que datas venham formatadas corretamente
     protected function casts(): array
     {
         return [
