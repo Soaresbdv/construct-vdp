@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/lib/axios';
 
@@ -11,54 +11,27 @@ interface Project {
   location: string;
   image_url: string;
   status: 'planning' | 'in_progress' | 'finished';
-  description?: string;
 }
 
 const projects = ref<Project[]>([]);
 const isLoading = ref(true);
 const currentUser = ref<any>(null);
-const activeProjectId = ref<number>(0); 
 const isScrolled = ref(false); 
 
 const statusConfig: Record<string, { label: string, class: string }> = {
-  planning: { label: 'BREVE LANÇAMENTO', class: 'border-stone-400 text-stone-500' },
-  in_progress: { label: 'EM OBRAS', class: 'border-amber-600 text-amber-600' },
-  finished: { label: 'ENTREGUE', class: 'border-emerald-700 text-emerald-700' },
+  planning: { label: 'Breve Lançamento', class: 'bg-stone-100 text-stone-600 border-stone-200' },
+  in_progress: { label: 'Em Obras', class: 'bg-amber-50 text-amber-700 border-amber-200' },
+  finished: { label: 'Entregue', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
 };
 
-let observer: IntersectionObserver | null = null;
-
-const setupObserver = () => {
-  const options = {
-    root: null,
-    rootMargin: '-45% 0px -45% 0px', 
-    threshold: 0
-  };
-
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const id = Number(entry.target.getAttribute('data-id'));
-        if (id) activeProjectId.value = id;
-      }
-    });
-  }, options);
-
-  nextTick(() => {
-    const items = document.querySelectorAll('.project-scroll-item');
-    items.forEach((el) => observer?.observe(el));
-  });
+const goToProject = (id: number) => {
+  router.push(`/projects/${id}`);
 };
 
-const activeProjectImage = computed(() => {
-  const active = projects.value.find(p => p.id === activeProjectId.value);
-  return active ? active.image_url : (projects.value[0]?.image_url || '');
-});
-
-const goToProject = (id: number) => router.push(`/projects/${id}`);
 const handleLogout = async () => {
   try { await api.post('/logout'); } catch (e) {}
   localStorage.removeItem('is_logged_in');
+  currentUser.value = null; 
   window.location.reload();
 };
 
@@ -70,214 +43,206 @@ onMounted(async () => {
   window.addEventListener('scroll', handleScroll);
 
   try {
-    const res = await api.get('/api/projects');
-    projects.value = res.data;
-    
-    if (projects.value.length > 0) {
-        activeProjectId.value = projects.value[0]?.id ?? 0;
-    }
+    const resProjects = await api.get('/api/projects');
+    projects.value = resProjects.data;
 
-    if (localStorage.getItem('is_logged_in') === 'true') {
-        try { const u = await api.get('/api/user'); currentUser.value = u.data; } catch (e) {}
+    try { 
+        const resUser = await api.get('/api/user'); 
+        currentUser.value = resUser.data; 
+        localStorage.setItem('is_logged_in', 'true');
+    } catch (e) {
+        currentUser.value = null;
+        localStorage.removeItem('is_logged_in');
     }
-
-    setupObserver();
 
   } catch (error) {
-    console.error(error);
+    console.error("Erro geral na dashboard:", error);
   } finally {
     isLoading.value = false;
   }
 });
 
 onUnmounted(() => {
-  if (observer) observer.disconnect();
-  window.removeEventListener('scroll', handleScroll); 
+  window.removeEventListener('scroll', handleScroll);
 });
 </script>
 
 <template>
-  <div class="bg-stone-50 font-sans text-stone-800 selection:bg-amber-200">
+  <div class="bg-white font-sans text-stone-800 selection:bg-amber-100">
     
     <nav 
-      class="fixed w-full z-50 top-0 left-0 px-6 transition-all duration-500 ease-in-out"
-      :class="isScrolled ? 'bg-white/95 backdrop-blur-md shadow-sm py-4 text-stone-900' : 'bg-transparent py-6 text-white'"
+      class="fixed w-full z-50 top-0 left-0 px-6 transition-all duration-300 ease-in-out border-b"
+      :class="isScrolled ? 'bg-white/95 backdrop-blur-md py-4 border-stone-100 text-stone-900 shadow-sm' : 'bg-transparent py-6 border-transparent text-stone-900'"
     >
-      <div class="max-w-[1920px] mx-auto flex justify-between items-center">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
         <div class="text-2xl font-serif font-bold tracking-tighter cursor-pointer hover:opacity-80 transition" @click="router.push('/')">
-          VDP<span class="text-amber-500">.</span>
+          VDP<span class="text-amber-600">.</span>
         </div>
         
         <div class="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest">
-           <RouterLink to="/portfolio" class="hover:text-amber-500 transition">Obras</RouterLink>
-           <RouterLink to="/about" class="hover:text-amber-500 transition">Sobre</RouterLink>
+           <RouterLink to="/portfolio" class="hover:text-amber-600 transition">Obras</RouterLink>
+           <RouterLink to="/about" class="hover:text-amber-600 transition">Sobre</RouterLink>
            
-           <div v-if="currentUser" class="flex items-center gap-6 ml-4 pl-6 border-l" :class="isScrolled ? 'border-stone-200' : 'border-white/20'">
+           <div v-if="currentUser" class="flex items-center gap-6 ml-4 pl-6 border-l border-stone-300 animate-fade-in">
              
              <RouterLink 
                 v-if="currentUser.is_admin" 
                 to="/admin" 
-                class="hover:text-amber-500 flex items-center gap-2"
+                class="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 rounded text-[10px] font-bold tracking-widest hover:bg-amber-600 transition shadow-md"
              >
-                <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 Painel
              </RouterLink>
 
-             <div class="text-right leading-none hidden lg:block">
-                <p class="text-[9px] opacity-60 font-light mb-1">OLÁ,</p>
-                <p class="font-serif font-bold text-sm">{{ currentUser.name.split(' ')[0] }}</p>
+             <div class="text-right leading-tight">
+                <p class="text-[9px] text-stone-400 font-medium normal-case">Olá,</p>
+                <p class="font-serif font-bold text-sm text-stone-900">{{ currentUser.name.split(' ')[0] }}</p>
              </div>
 
-             <button @click="handleLogout" class="hover:text-red-500 transition" title="Sair da Conta">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+             <button @click="handleLogout" class="text-stone-400 hover:text-red-500 transition p-1" title="Sair da Conta">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
              </button>
            </div>
 
-           <RouterLink 
-             v-else 
-             to="/login" 
-             class="px-6 py-2 border rounded-full transition duration-300"
-             :class="isScrolled ? 'border-stone-200 hover:bg-stone-900 hover:text-white' : 'border-white/30 hover:bg-white hover:text-stone-900'"
-           >
-             Área do Cliente
-           </RouterLink>
+           <div v-else class="flex items-center gap-4 ml-8 pl-8 border-l border-stone-300">
+              <RouterLink 
+                to="/login" 
+                class="group flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-stone-900 hover:text-amber-600 transition"
+              >
+                <span>Entrar</span>
+                <svg class="w-4 h-4 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+              </RouterLink>
+           </div>
+
         </div>
       </div>
     </nav>
 
-    <div v-if="isLoading" class="h-screen w-full flex items-center justify-center bg-stone-50 fixed z-[60]">
-        <div class="flex flex-col items-center animate-pulse">
-            <span class="text-3xl font-serif font-bold mb-2">VDP.</span>
-            <div class="h-px w-12 bg-stone-900"></div>
-        </div>
+    <div v-if="isLoading" class="h-screen w-full flex items-center justify-center bg-white fixed z-[60]">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
     </div>
 
     <div v-else>
-        <header class="h-screen relative flex items-center justify-center overflow-hidden">
-            <div class="absolute inset-0 z-0">
-               <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1920&auto=format&fit=crop" class="w-full h-full object-cover brightness-[0.7]" />
-            </div>
-            
-            <div class="relative z-10 text-center text-white px-4 animate-fade-in-up">
-                <p class="text-amber-400 text-xs font-bold uppercase tracking-[0.4em] mb-4">Desde 2010</p>
-                <h1 class="text-6xl md:text-8xl font-serif leading-tight mb-8">
-                    Viva o <br/><span class="italic font-light opacity-80">extraordinário.</span>
-                </h1>
-                <p class="max-w-md mx-auto text-sm font-light tracking-wide opacity-90 leading-relaxed border-l border-amber-500 pl-4 text-left">
-                    Design autoral e engenharia de precisão para criar marcos urbanos que atravessam gerações.
-                </p>
-            </div>
+        <header class="pt-32 pb-20 px-6 max-w-7xl mx-auto min-h-[85vh] flex flex-col justify-center">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="order-2 lg:order-1 space-y-8 animate-fade-in-up">
+                    <div class="inline-flex items-center gap-3">
+                        <div class="h-px w-8 bg-amber-600"></div>
+                        <span class="text-amber-600 text-xs font-bold uppercase tracking-[0.3em]">Desde 2010</span>
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-7xl font-serif text-stone-900 leading-[1.1]">
+                        Arquitetura que <br> <span class="italic text-stone-400 font-light">inspira a vida.</span>
+                    </h1>
+                    
+                    <p class="text-lg text-stone-500 font-light leading-relaxed max-w-md">
+                        Projetamos marcos urbanos que unem a solidez da engenharia à arte de viver bem. Conheça nossos empreendimentos exclusivos.
+                    </p>
 
-            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-white animate-bounce">
-                <svg class="w-6 h-6 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    <div class="pt-4 flex gap-4">
+                        <button 
+                            @click="router.push('/portfolio')"
+                            class="px-8 py-4 bg-stone-900 text-white text-xs font-bold uppercase tracking-widest hover:bg-amber-700 transition duration-300"
+                        >
+                            Ver Projetos
+                        </button>
+                    </div>
+                </div>
+
+                <div class="order-1 lg:order-2 relative h-[500px] lg:h-[600px] w-full">
+                    <div class="absolute right-0 top-0 w-4/5 h-full overflow-hidden rounded-sm shadow-2xl z-10">
+                        <img 
+                            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1920&auto=format&fit=crop" 
+                            class="w-full h-full object-cover hover:scale-105 transition duration-1000"
+                        />
+                    </div>
+                    <div class="absolute left-0 bottom-12 w-2/5 h-3/5 overflow-hidden rounded-sm shadow-xl z-20 border-4 border-white hidden md:block">
+                         <img 
+                            src="https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800&auto=format&fit=crop" 
+                            class="w-full h-full object-cover"
+                        />
+                    </div>
+                </div>
             </div>
         </header>
 
-        <section class="relative bg-stone-50">
-            
-            <div class="hidden lg:block fixed top-0 right-0 w-1/2 h-screen z-0">
-                <div class="absolute inset-0 bg-stone-900/10 z-10"></div>
-                <transition name="fade" mode="in-out">
-                    <img 
-                        :key="activeProjectImage" 
-                        :src="activeProjectImage" 
-                        class="absolute inset-0 w-full h-full object-cover"
-                        alt="Project Cover"
-                    />
-                </transition>
-            </div>
-
-            <div class="relative z-10 w-full lg:w-1/2 bg-stone-50 lg:bg-transparent">
-                
-                <div class="pt-32 pb-20 px-8 md:px-20">
-                    <h2 class="text-4xl font-serif text-stone-900 mb-2">Coleção Exclusiva</h2>
-                    <div class="w-16 h-1 bg-amber-600"></div>
+        <section class="bg-stone-50 py-24 px-6">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+                    <div>
+                        <h2 class="text-4xl font-serif text-stone-900 mb-2">Portfolio Selection</h2>
+                        <div class="h-1 w-20 bg-amber-600"></div>
+                    </div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-stone-400">
+                        Mostrando {{ projects.length }} Projetos
+                    </p>
                 </div>
 
-                <div class="flex flex-col pb-32">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div 
                         v-for="project in projects" 
                         :key="project.id"
-                        :data-id="project.id"
-                        class="project-scroll-item min-h-[90vh] flex flex-col justify-center px-8 md:px-20 border-l border-stone-200 lg:border-none transition-opacity duration-700"
-                        :class="activeProjectId === project.id ? 'opacity-100' : 'opacity-40 lg:blur-[1px]'"
+                        class="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-stone-100"
+                        @click="goToProject(project.id)"
                     >
-                        <div class="lg:hidden w-full h-[400px] mb-8 overflow-hidden rounded-sm shadow-md">
-                            <img :src="project.image_url" class="w-full h-full object-cover" />
+                        <div class="relative h-[300px] overflow-hidden">
+                            <div class="absolute top-4 left-4 z-10">
+                                <span 
+                                    class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest border rounded bg-white/90 backdrop-blur-sm shadow-sm"
+                                    :class="statusConfig[project.status]?.class"
+                                >
+                                    {{ statusConfig[project.status]?.label }}
+                                </span>
+                            </div>
+                            <img 
+                                :src="project.image_url" 
+                                class="w-full h-full object-cover transition duration-700 group-hover:scale-110"
+                            />
+                            <div class="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition duration-300 flex items-center justify-center">
+                                <span class="opacity-0 group-hover:opacity-100 bg-white text-stone-900 px-6 py-3 text-xs font-bold uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition duration-300">
+                                    Visualizar
+                                </span>
+                            </div>
                         </div>
 
-                        <div class="max-w-md">
-                            <span 
-                                class="inline-block px-3 py-1 mb-6 text-[10px] font-bold uppercase tracking-widest border rounded-full"
-                                :class="statusConfig[project.status]?.class"
-                            >
-                                {{ statusConfig[project.status]?.label }}
-                            </span>
-
-                            <h3 
-                                class="text-5xl md:text-7xl font-serif text-stone-900 mb-6 cursor-pointer hover:text-amber-800 transition leading-[0.9]"
-                                @click="goToProject(project.id)"
-                            >
+                        <div class="p-8">
+                            <h3 class="text-2xl font-serif text-stone-900 mb-2 group-hover:text-amber-700 transition">
                                 {{ project.title }}
                             </h3>
-
-                            <p class="text-stone-400 text-sm uppercase tracking-widest mb-8 flex items-center gap-2">
-                                <span class="w-4 h-px bg-stone-400"></span> {{ project.location }}
-                            </p>
-
-                            <p class="text-stone-600 text-lg font-light leading-relaxed mb-10">
-                                {{ project.description || "Um empreendimento desenhado para redefinir o skyline da região, unindo conforto absoluto e design atemporal." }}
-                            </p>
-
-                            <button 
-                                @click="goToProject(project.id)"
-                                class="group flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-stone-900 hover:text-amber-700 transition"
-                            >
-                                <span class="w-8 h-px bg-stone-900 group-hover:w-16 group-hover:bg-amber-700 transition-all duration-300"></span>
-                                Ver Detalhes
-                            </button>
+                            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-stone-400">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                {{ project.location }}
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <div class="mt-20 text-center">
+                    <button 
+                        @click="router.push('/portfolio')"
+                        class="inline-block px-10 py-4 border border-stone-300 text-stone-500 hover:border-stone-900 hover:text-stone-900 transition uppercase text-xs font-bold tracking-[0.2em]"
+                    >
+                        Carregar Mais Obras
+                    </button>
+                </div>
             </div>
         </section>
 
-        <footer class="relative z-20 bg-stone-900 text-stone-500 py-24 px-8">
-            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                <div class="text-center md:text-left">
-                    <div class="text-3xl font-serif font-bold text-white tracking-tighter mb-2">
-                        VDP<span class="text-amber-600">.</span>
-                    </div>
-                    <p class="text-xs uppercase tracking-widest opacity-50">Construindo Legados.</p>
+        <footer class="bg-stone-900 text-stone-400 py-16 px-6">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+                <div>
+                    <h2 class="text-2xl font-serif font-bold text-white mb-2">VDP<span class="text-amber-600">.</span></h2>
+                    <p class="text-xs uppercase tracking-widest opacity-50">Excelência em cada detalhe.</p>
                 </div>
-                
-                <div class="flex gap-8 text-sm font-medium">
+                <div class="flex gap-8 text-xs font-bold uppercase tracking-widest">
                     <a href="#" class="hover:text-white transition">Instagram</a>
                     <a href="#" class="hover:text-white transition">LinkedIn</a>
                     <a href="#" class="hover:text-white transition">Contato</a>
                 </div>
-
-                <p class="text-xs uppercase tracking-widest opacity-30">&copy; 2026 VDP Construct.</p>
+                <p class="text-[10px] uppercase tracking-widest opacity-30">&copy; 2026 VDP Construct.</p>
             </div>
         </footer>
+
     </div>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 1s ease-in-out, transform 1.2s ease-out;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: scale(1.05); 
-}
-
-.fade-leave-active {
-  position: absolute;
-}
-</style>

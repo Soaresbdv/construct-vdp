@@ -40,24 +40,17 @@ const router = createRouter({
       component: () => import('../views/AdminView.vue'),
       
       beforeEnter: async (to, from, next) => {
-        console.log("Verificando credenciais...");
-        
         try {
           const response = await api.get('/api/user');
           const user = response.data;
-          
-          console.log("Usuário encontrado:", user.email, "| Admin:", user.is_admin);
 
           if (user.is_admin) {
-            console.log("Acesso liberado.");
             next();
           } else {
-            console.log("Acesso negado (Não é admin).");
-            alert("Acesso restrito a administradores.");
+            alert("Acesso negado: Apenas administradores.");
             next('/');
           }
         } catch (error) {
-          console.log("Erro de autenticação (Não logado). Redirecionando...");
           next('/login');
         }
       }
@@ -65,7 +58,7 @@ const router = createRouter({
     {
       path: '/portfolio',
       name: 'portfolio',
-      component: () => import('../views/PortfolioView.vue') // Vamos criar este arquivo já já
+      component: () => import('../views/PortfolioView.vue') 
     },
   ]
 })
