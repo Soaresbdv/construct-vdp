@@ -11,8 +11,6 @@ use App\Http\Controllers\DashboardController;
 Route::get('/projects', [ProjectController::class, 'index']);
 // Ver detalhes de uma obra (Página de Detalhes)
 Route::get('/projects/{id}', [ProjectController::class, 'show']);
-// Rota Pública (Qualquer um pode virar um lead)
-Route::post('/leads', [App\Http\Controllers\LeadController::class, 'store']);
 
 // Rotas protegidas por login
 Route::middleware('auth:sanctum')->group(function () {
@@ -31,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/projects/{id}/contact', function ($id) {
         return response()->json(['message' => 'Solicitação enviada ao responsável!']);
     });
+
+    // Rota Pública (Qualquer um pode virar um lead)
+    Route::post('/leads', [App\Http\Controllers\LeadController::class, 'store']);
 });
 
 // Rotas administrativas

@@ -18,6 +18,7 @@ const projects = ref<Project[]>([]);
 const isLoading = ref(true);
 const currentUser = ref<any>(null);
 const activeProjectId = ref<number>(0); 
+const isScrolled = ref(false); 
 
 const statusConfig: Record<string, { label: string, class: string }> = {
   planning: { label: 'BREVE LANÇAMENTO', class: 'border-stone-400 text-stone-500' },
@@ -51,7 +52,6 @@ const setupObserver = () => {
 
 const activeProjectImage = computed(() => {
   const active = projects.value.find(p => p.id === activeProjectId.value);
-
   return active ? active.image_url : (projects.value[0]?.image_url || '');
 });
 
@@ -62,7 +62,13 @@ const handleLogout = async () => {
   window.location.reload();
 };
 
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 50;
+};
+
 onMounted(async () => {
+  window.addEventListener('scroll', handleScroll);
+
   try {
     const res = await api.get('/api/projects');
     projects.value = res.data;
@@ -86,27 +92,55 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (observer) observer.disconnect();
+  window.removeEventListener('scroll', handleScroll); 
 });
 </script>
 
 <template>
   <div class="bg-stone-50 font-sans text-stone-800 selection:bg-amber-200">
     
-    <nav class="fixed w-full z-50 top-0 left-0 px-6 py-6 transition-all duration-300 mix-blend-difference text-white">
+    <nav 
+      class="fixed w-full z-50 top-0 left-0 px-6 transition-all duration-500 ease-in-out"
+      :class="isScrolled ? 'bg-white/95 backdrop-blur-md shadow-sm py-4 text-stone-900' : 'bg-transparent py-6 text-white'"
+    >
       <div class="max-w-[1920px] mx-auto flex justify-between items-center">
         <div class="text-2xl font-serif font-bold tracking-tighter cursor-pointer hover:opacity-80 transition" @click="router.push('/')">
           VDP<span class="text-amber-500">.</span>
         </div>
         
-        <div class="hidden md:flex gap-8 items-center text-xs font-bold uppercase tracking-widest">
-           <RouterLink to="/portfolio" class="hover:text-amber-400 transition">Obras</RouterLink>
-           <RouterLink to="/about" class="hover:text-amber-400 transition">Sobre</RouterLink>
+        <div class="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest">
+           <RouterLink to="/portfolio" class="hover:text-amber-500 transition">Obras</RouterLink>
+           <RouterLink to="/about" class="hover:text-amber-500 transition">Sobre</RouterLink>
            
-           <div v-if="currentUser" class="flex items-center gap-4">
-             <RouterLink v-if="currentUser.is_admin" to="/admin" class="hover:text-amber-400">Admin</RouterLink>
-             <button @click="handleLogout" class="hover:text-red-400">Sair</button>
+           <div v-if="currentUser" class="flex items-center gap-6 ml-4 pl-6 border-l" :class="isScrolled ? 'border-stone-200' : 'border-white/20'">
+             
+             <RouterLink 
+                v-if="currentUser.is_admin" 
+                to="/admin" 
+                class="hover:text-amber-500 flex items-center gap-2"
+             >
+                <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Painel
+             </RouterLink>
+
+             <div class="text-right leading-none hidden lg:block">
+                <p class="text-[9px] opacity-60 font-light mb-1">OLÁ,</p>
+                <p class="font-serif font-bold text-sm">{{ currentUser.name.split(' ')[0] }}</p>
+             </div>
+
+             <button @click="handleLogout" class="hover:text-red-500 transition" title="Sair da Conta">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+             </button>
            </div>
-           <RouterLink v-else to="/login" class="px-5 py-2 border border-white/30 rounded-full hover:bg-white hover:text-black transition">Área do Cliente</RouterLink>
+
+           <RouterLink 
+             v-else 
+             to="/login" 
+             class="px-6 py-2 border rounded-full transition duration-300"
+             :class="isScrolled ? 'border-stone-200 hover:bg-stone-900 hover:text-white' : 'border-white/30 hover:bg-white hover:text-stone-900'"
+           >
+             Área do Cliente
+           </RouterLink>
         </div>
       </div>
     </nav>

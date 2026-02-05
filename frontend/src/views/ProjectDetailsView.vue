@@ -5,11 +5,13 @@ import api from '@/lib/axios';
 
 const route = useRoute();
 const router = useRouter();
+
 const project = ref<any>(null);
 const currentUser = ref<any>(null);
 const isLoading = ref(true);
 const showLeadModal = ref(false);
 const isSending = ref(false);
+
 const leadForm = reactive({
   name: '',
   phone: '',
@@ -28,24 +30,39 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('pt-BR');
 };
 
-const checkAuth = () => {
+const checkAuth = (actionName = 'continuar') => {
   if (!currentUser.value) {
-    const confirmLogin = confirm("Recurso Exclusivo\n\nPara baixar documentos técnicos, é necessário estar logado.\nDeseja entrar agora?");
-    if (confirmLogin) router.push('/login');
-    return false;
+    const confirmLogin = confirm(`Área Restrita\n\nPara ${actionName}, é necessário identificar-se.\nDeseja fazer login ou criar conta agora?`);
+    if (confirmLogin) {
+      router.push('/login');
+    }
+    return false; 
   }
-  return true;
+  return true; 
 };
 
 const handleDownload = async () => {
-  if (!checkAuth()) return;
+  if (!checkAuth('baixar documentos técnicos')) return;
+
   try {
-    alert("⬇️ Iniciando download seguro...");
+    alert("⬇Iniciando download seguro...");
     const response = await api.get(`/api/projects/${project.value.id}/download`);
     window.open(response.data.url, '_blank');
   } catch (error) {
     alert("Erro ao baixar arquivo.");
   }
+};
+
+const handleInterest = () => {
+
+  if (!checkAuth('falar com nossos consultores')) return;
+
+  if (currentUser.value) {
+    leadForm.name = currentUser.value.name;
+    leadForm.email = currentUser.value.email;
+  }
+  
+  showLeadModal.value = true;
 };
 
 const submitLead = async () => {
@@ -59,17 +76,16 @@ const submitLead = async () => {
       message: leadForm.message || `Tenho interesse no ${project.value.title}`
     });
 
-    const phoneVendor = "5541995222729"; // Futuramente vai ir pra .env
+    const phoneVendor = "5541995222729"; // Alterar par ao número real
     const text = `Olá! Me chamo *${leadForm.name}*.\nTenho interesse no empreendimento *${project.value.title}*.\n\n${leadForm.message}`;
     const url = `https://wa.me/${phoneVendor}?text=${encodeURIComponent(text)}`;
     
     window.open(url, '_blank');
     
     showLeadModal.value = false;
-    alert("✅ Solicitação recebida! Redirecionando para o atendimento...");
+    alert("Solicitação recebida! Redirecionando para o atendimento...");
     
-    // Limpa form
-    leadForm.name = '';
+    leadForm.name = currentUser.value?.name || '';
     leadForm.phone = '';
     leadForm.message = '';
 
@@ -87,12 +103,10 @@ onMounted(async () => {
     const responseProject = await api.get(`/api/projects/${id}`);
     project.value = responseProject.data;
 
+
     try {
       const responseUser = await api.get('/api/user');
       currentUser.value = responseUser.data;
-      
-      leadForm.name = currentUser.value.name;
-      leadForm.email = currentUser.value.email;
     } catch (e) {
     }
 
@@ -188,7 +202,7 @@ onMounted(async () => {
             </button>
             
             <button 
-              @click="showLeadModal = true"
+              @click="handleInterest"
               class="w-full py-4 bg-stone-900 text-white rounded-lg hover:bg-amber-700 transition font-bold shadow-xl shadow-stone-900/20 flex items-center justify-center gap-2 transform hover:-translate-y-1 duration-300"
             >
               <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
