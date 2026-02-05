@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\DashboardController;
 
 // Rotas públicas
 // Listar todas as obras (Landing Page)
@@ -43,5 +44,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::delete('/projects/{id}', [ProjectController::class, 'destroy']);
     // Listar leads 
     Route::get('/admin/leads', [App\Http\Controllers\LeadController::class, 'index']);
-    
+    // Dashboard Stats
+    Route::get('/admin/stats', [App\Http\Controllers\DashboardController::class, 'stats']);
 });
