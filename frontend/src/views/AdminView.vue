@@ -85,14 +85,11 @@ const statusConfig: Record<string, { label: string, class: string, icon: string 
 };
 
 const loadData = async () => {
-  // Se for apenas atualização de gráfico, não mostramos loading tela inteira
-  // isLoading.value = true; (Opcional: Pode remover se quiser reload silencioso)
-  
+
   try {
     const [resProjects, resLeads, resStats] = await Promise.all([
         api.get('/api/projects'),
         api.get('/api/admin/leads'),
-        // AQUI ESTÁ A MUDANÇA: Envia o parâmetro period
         api.get(`/api/admin/stats?period=${chartPeriod.value}`)
     ]);
     projects.value = resProjects.data;
@@ -112,7 +109,6 @@ const changeChartPeriod = async () => {
 
 onMounted(loadData);
 
-// --- Filtros ---
 const filteredProjects = computed(() => {
   if (!searchQuery.value) return projects.value;
   return projects.value.filter(p => p.title.toLowerCase().includes(searchQuery.value.toLowerCase()));
@@ -122,7 +118,6 @@ const filteredLeads = computed(() => {
   return leads.value.filter(l => l.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || l.project?.title.toLowerCase().includes(searchQuery.value.toLowerCase()));
 });
 
-// --- Helpers e CRUD (Mesma lógica anterior) ---
 const formatDate = (dateStr: string | null) => dateStr ? new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const openCreateModal = () => { editingId.value = null; resetForm(); showModal.value = true; };
@@ -131,8 +126,10 @@ const openEditModal = (project: Project) => {
   Object.assign(form, { ...project, start_date: project.start_date?.split('T')[0] ?? '', end_date: project.end_date?.split('T')[0] ?? '', imageFile: null });
   showModal.value = true;
 };
+
 const resetForm = () => { Object.assign(form, { title: '', location: '', status: 'planning', start_date: '', end_date: '', imageFile: null }); };
 const handleFileUpload = (e: Event) => { const t = e.target as HTMLInputElement; if(t.files?.[0]) form.imageFile = t.files[0]; };
+
 const handleSave = async () => {
   isSaving.value = true;
   const fd = new FormData();
@@ -145,10 +142,11 @@ const handleSave = async () => {
     await api.post(url, fd); alert("Sucesso!"); showModal.value = false; loadData();
   } catch (e) { alert("Erro ao salvar."); } finally { isSaving.value = false; }
 };
+
 const handleDelete = async (id: number) => { if(confirm("Remover?")) { await api.delete(`/api/projects/${id}`); loadData(); } };
 const openWhatsApp = (phone: string, name: string) => { window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=Olá ${name}, falamos da VDP!`, '_blank'); };
-</script>
 
+</script>
 <template>
   <div class="min-h-screen bg-stone-100 font-sans text-stone-800 flex">
     
